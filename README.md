@@ -6,7 +6,7 @@ This project is being developed as part of my bachelor thesis for Computer Engin
 
 Updates on this file and code coming soon...
 
-1.- Installation
+1.- Installation:
     If you are fortunate enough to own a Kinect and want to test the code from this project first you will have to         install a bunch of specific packages and libraries to make it work.
     Installation process covers dependencies, Openkinect and OpenCV installation. Python and Numpy must be already         installed.
     
