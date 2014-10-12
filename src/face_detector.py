@@ -3,6 +3,7 @@
     Based on OpenCV sample.
     Code at:
     https://github.com/Itseez/opencv/blob/master/samples/python2/facedetect.py
+    Enhancements being done on other branch
 """
 
 import freenect
