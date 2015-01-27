@@ -89,12 +89,12 @@ def file_saving():
     if run_mode == "tr":
         tr_counter+=1
         cv.imwrite(tr_path+str(tr_counter)+"_bw.png",bw_img[ry:ry+r_area[1],rx:rx+r_area[0]])
-        cv.imwrite(tr_path+str(tr_counter)+"_depth.png",depth_img[ry:ry+r_area[1],rx:rx+r_area[0]])
+        cv.imwrite(tr_path+str(tr_counter)+"_depth.png",depth_img[ry-15:ry+r_area[1],rx+20:rx+r_area[0]])
         cv.imwrite(tr_path+str(tr_counter)+"_rgb.png",rgb_img[ry:ry+r_area[1],rx:rx+r_area[0]])
     else:
         ts_counter+=1
         cv.imwrite(ts_path+str(ts_counter)+"_bw.png",bw_img[ry:ry+r_area[1],rx:rx+r_area[0]])
-        cv.imwrite(ts_path+str(ts_counter)+"_depth.png",depth_img[ry:ry+r_area[1],rx:rx+r_area[0]])
+        cv.imwrite(ts_path+str(ts_counter)+"_depth.png",depth_img[ry-15:ry+r_area[1],rx+20:rx+r_area[0]])
         cv.imwrite(ts_path+str(ts_counter)+"_rgb.png",rgb_img[ry:ry+r_area[1],rx:rx+r_area[0]])
 
 def keyboard_handler():
@@ -180,6 +180,7 @@ def body(dev,ctx):
     #Exit condition for finishing execution
     if not keep_running:
         #Writes state file
+        state_file = open(data_path + "st","w")
         state_file.write("tr: "+str(tr_counter)+"\n"+"ts: "+str(ts_counter))
         state_file.close()
         cv.destroyAllWindows() # Kills all windows
@@ -190,17 +191,18 @@ def init():
         Initializes counter for training and test files by reading
         the data through the state file.
     """
-    global state_file
-    state_file = open(data_path + "st","w+b")
+    global state_file,tr_counter,ts_counter
+    state_file = open(data_path + "st","r")
     lines = state_file.readlines()
     for line in lines:
-        if line.startswith("tr"):
+        if line.startswith("tr:"):
             tmp=line.split(" ")
-            tr_counter = tmp[1]
-        if line.startswith("ts"):
+            tr_counter = int(tmp[1])
+        if line.startswith("ts:"):
             tmp=line.split(" ")
-            ts_counter = tmp[1]
-
+            ts_counter = int(tmp[1])
+    state_file.close()
+    
 def start(mode = "tr"):
     """
         Start method for the module, used by other modules to initialize
