@@ -7,13 +7,7 @@ import freenect
 import numpy as np
 import cv2 as cv
 import os.path
-
-"""
-    State file data, saves tr and ts number of images
-"""
-state_file = None
-tr_counter = 0
-ts_counter = 0
+from file_manager import File_Manager
 
 """
     Kinect global variables
@@ -38,17 +32,9 @@ r_area = (192,256)
 rx = None
 ry = None
 
-"""Path to the multiple data being managed"""
-#Data path
-data_path = os.path.abspath(os.path.join(os.getcwd(), os.pardir)) +"/data/"
-#Detector path
-detect_path = data_path + "detector/"
-#Training path
-tr_path = data_path + "tr/"
-#Test path
-ts_path = data_path + "ts/"
-#.xml file with cascade detector for frontal faces
-faceCascade = cv.CascadeClassifier(detect_path + "haarcascade_frontalface.xml")
+"""File manager object"""
+file_manager = None
+faceCascade = None
 
 """Windows for image display"""
 #Window creation
@@ -84,18 +70,10 @@ def file_saving():
         Saves the files taken from the sensor to it's corresponding directory
         according to run_mode
     """
-    global rx,ry,r_area, ts_counter, tr_counter
+    global rx,ry,r_area, file_manager, run_mode
     print "SMILE!" #Polite salutation, useful to realize when the photo is taken
-    if run_mode == "tr":
-        tr_counter+=1
-        cv.imwrite(tr_path+str(tr_counter)+"_bw.png",bw_img[ry:ry+r_area[1],rx:rx+r_area[0]])
-        cv.imwrite(tr_path+str(tr_counter)+"_depth.png",depth_img[ry-15:ry+r_area[1],rx+20:rx+r_area[0]])
-        cv.imwrite(tr_path+str(tr_counter)+"_rgb.png",rgb_img[ry:ry+r_area[1],rx:rx+r_area[0]])
-    else:
-        ts_counter+=1
-        cv.imwrite(ts_path+str(ts_counter)+"_bw.png",bw_img[ry:ry+r_area[1],rx:rx+r_area[0]])
-        cv.imwrite(ts_path+str(ts_counter)+"_depth.png",depth_img[ry-15:ry+r_area[1],rx+20:rx+r_area[0]])
-        cv.imwrite(ts_path+str(ts_counter)+"_rgb.png",rgb_img[ry:ry+r_area[1],rx:rx+r_area[0]])
+    samples = [bw_img[ry:ry+r_area[1],rx:rx+r_area[0]],depth_img[ry-15:ry+r_area[1],rx+20:rx+r_area[0]],rgb_img[ry:ry+r_area[1],rx:rx+r_area[0]]]
+    file_manager.store_samples(samples,run_mode)
 
 def keyboard_handler():
     """
@@ -119,7 +97,7 @@ def display_rgb(dev, data, timestamp):
     """
         Displays the RGB image for sampling
     """
-    global bw_img, rgb_img, picture_flag, r_color, r_area,rx,ry
+    global bw_img, rgb_img, picture_flag, r_color, r_area,rx,ry,faceCascade
     #Capturing frame by frame from video camera
     rgb_img=video_cv(data)
     bw_img = cv.cvtColor(rgb_img, cv.COLOR_BGR2GRAY)
@@ -168,7 +146,7 @@ def body(dev,ctx):
         Execution body for the runloop, manages execution init for Kinect-related parameters.
         Terminates all running processes to safely shutdown device services.
     """
-    global tilt_angle,state_file,tr_counter
+    global tilt_angle,state_file,tr_counter,file_manager
     #Initializes tilt_angle variable for motor control
     if tilt_angle==None:
         freenect.update_tilt_state(dev)
@@ -179,38 +157,23 @@ def body(dev,ctx):
         freenect.update_tilt_state(dev)
     #Exit condition for finishing execution
     if not keep_running:
-        #Writes state file
-        state_file = open(data_path + "st","w")
-        state_file.write("tr: "+str(tr_counter)+"\n"+"ts: "+str(ts_counter))
-        state_file.close()
+        del file_manager
         cv.destroyAllWindows() # Kills all windows
         raise freenect.Kill() # Shutdowns all Kinect's services
-
-def init():
-    """
-        Initializes counter for training and test files by reading
-        the data through the state file.
-    """
-    global state_file,tr_counter,ts_counter
-    state_file = open(data_path + "st","r")
-    lines = state_file.readlines()
-    for line in lines:
-        if line.startswith("tr:"):
-            tmp=line.split(" ")
-            tr_counter = int(tmp[1])
-        if line.startswith("ts:"):
-            tmp=line.split(" ")
-            ts_counter = int(tmp[1])
-    state_file.close()
     
 def start(mode = "tr"):
     """
         Start method for the module, used by other modules to initialize
         Kinect services.
     """
-    global run_mode 
+    global run_mode, file_manager, faceCascade
     run_mode= mode
-    init() #Tmp location of method, in the future will be removed
+    file_manager = File_Manager()
+    faceCascade = file_manager.faceCascade
+    
+    file_manager.new_sampling("tr")
+    
+    
     freenect.runloop(video=display_rgb,depth=display_depth,body=body)
     
-start()
+start("tr")
