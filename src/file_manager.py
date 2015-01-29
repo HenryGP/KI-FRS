@@ -36,18 +36,18 @@ class File_Manager():
             self.tr_counter = sorted([x[0].split("/")[-1] for x in os.walk(self.tr_path)],reverse=True)[0]
             if self.tr_counter=="": 
                 self.tr_counter=0
-                self.new_sampling("tr")
             else: 
                 self.tr_counter=int(self.tr_counter)
+            self.new_sampling("tr")
             self.tr_ptr=self.tr_counter
             self.to_dir(self.tr_ptr, "tr")
         else:
             self.ts_counter = sorted([x[0].split("/")[-1] for x in os.walk(self.ts_path)],reverse=True)[0]
             if self.ts_counter=="": 
                 self.ts_counter=0
-                self.new_sampling("ts")
             else: 
                 self.ts_counter=int(self.ts_counter)
+            self.new_sampling("ts")
             self.ts_ptr=self.ts_counter
             self.to_dir(self.ts_ptr, "ts")
         
