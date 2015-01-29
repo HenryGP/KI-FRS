@@ -27,24 +27,29 @@ class File_Manager():
     """Internal dir counters"""
     img_ptr = 0; tr_ptr = 0; ts_ptr = 0 
     
-    def __init__(self):
+    def __init__(self,mode="tr"):
         """
             Initializes counter for training and test files by reading
             the data through the state file.
         """
-        try:
-            self.tr_counter = int(sorted([x[0].split("/")[-1] for x in os.walk(self.tr_path)],reverse=True)[0])
-            self.ts_counter = int(sorted([x[0].split("/")[-1] for x in os.walk(self.ts_path)],reverse=True)[0])
-            self.to_dir(self.tr_counter) #Better take this down
-        except:
-            self.tr_counter = 1
-            self.ts_counter = 1
-            print "There were no directories"
-        #############################
-        """ Temporary section """
-        self.tr_ptr = self.tr_counter
-        self.ts_ptr = self.ts_counter
-        #############################
+        if mode=="tr":
+            self.tr_counter = sorted([x[0].split("/")[-1] for x in os.walk(self.tr_path)],reverse=True)[0]
+            if self.tr_counter=="": 
+                self.tr_counter=0
+                self.new_sampling("tr")
+            else: 
+                self.tr_counter=int(self.tr_counter)
+            self.tr_ptr=self.tr_counter
+            self.to_dir(self.tr_ptr, "tr")
+        else:
+            self.ts_counter = sorted([x[0].split("/")[-1] for x in os.walk(self.ts_path)],reverse=True)[0]
+            if self.ts_counter=="": 
+                self.ts_counter=0
+                self.new_sampling("ts")
+            else: 
+                self.ts_counter=int(self.ts_counter)
+            self.ts_ptr=self.ts_counter
+            self.to_dir(self.ts_ptr, "ts")
         
     """def __del__(self):"""
     
@@ -52,15 +57,16 @@ class File_Manager():
         """Creates new directory under the dir specified by 'mode'"""
         if mode == "tr": #Creates new folder for training
             self.tr_counter += 1
+            print "Path: ",self.tr_path+str(self.tr_counter)
             os.makedirs(self.tr_path+str(self.tr_counter))
             self.tr_ptr=self.tr_counter
-            img_ptr = 0
         else: #Creates new folder for test
             self.ts_counter += 1
+            print "Path: ",self.ts_path+str(self.ts_counter)
             os.makedirs(self.ts_path+str(self.ts_counter))
             self.ts_ptr=self.ts_counter
-            img_ptr = 0
-    
+        self.img_ptr = 0
+        
     def store_samples(self,samples,mode="tr"):
         """
             Gets the image samples (BW,RGB and Depth) and stores them in corresponding
@@ -86,7 +92,11 @@ class File_Manager():
                 raise
             else:
                 self.tr_ptr=dir_ptr
-                self.img_ptr =  max([ int(f.split("_")[0]) for f in listdir(self.tr_path+str(dir_ptr)+"/") if isfile(join(self.tr_path+str(dir_ptr)+"/",f)) ])
+                self.img_ptr =  [ int(f.split("_")[0]) for f in listdir(self.tr_path+str(dir_ptr)+"/") if isfile(join(self.tr_path+str(dir_ptr)+"/",f)) ]
+                if len(self.img_ptr)==0:
+                    self.img_ptr=0
+                else:
+                    self.img_ptr =  max(self.img_ptr)
                 print "Tr pointer: ",self.tr_ptr
                 print "Img pointer: ",self.img_ptr
         else:
@@ -94,7 +104,11 @@ class File_Manager():
                 raise
             else:
                 self.ts_ptr=dir_ptr
-                self.img_ptr =  max([ int(f.split("_")[0]) for f in listdir(self.ts_path+str(dir_ptr)+"/") if isfile(join(self.ts_path+str(dir_ptr)+"/",f)) ])
+                self.img_ptr =  [ int(f.split("_")[0]) for f in listdir(self.ts_path+str(dir_ptr)+"/") if isfile(join(self.ts_path+str(dir_ptr)+"/",f)) ]
+                if len(self.img_ptr)==0:
+                    self.img_ptr=0
+                else:
+                    self.img_ptr =  max(self.img_ptr)
                 print "Ts pointer: ",self.ts_ptr
                 print "Img pointer: ",self.img_ptr
 

@@ -80,7 +80,7 @@ def keyboard_handler():
         Handler to manage keyboard interaction to move sensor tilt angle, end execution and
         pull data.
     """
-    global keep_running, tilt_angle 
+    global keep_running, tilt_angle, run_mode,file_manager
     key = cv.waitKey(1)
     if key== 32: #File saving
         file_saving()
@@ -90,6 +90,13 @@ def keyboard_handler():
     if key== 65364: #Down key
         if not tilt_angle-3<-27:
             tilt_angle-=3
+    if key== 77 or key==109:
+        if run_mode=="tr": run_mode="ts"
+        else: run_mode="tr"
+        del file_manager
+        file_manager=File_Manager(run_mode)
+    if key== 78 or key==110:
+        file_manager.new_sampling(run_mode)
     if key == ord('q') or key==27: #End execution
         keep_running = False
 
@@ -168,12 +175,8 @@ def start(mode = "tr"):
     """
     global run_mode, file_manager, faceCascade
     run_mode= mode
-    file_manager = File_Manager()
+    file_manager = File_Manager(mode)
     faceCascade = file_manager.faceCascade
-    
-    file_manager.new_sampling("tr")
-    
-    
     freenect.runloop(video=display_rgb,depth=display_depth,body=body)
     
 start("tr")
