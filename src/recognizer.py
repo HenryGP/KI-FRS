@@ -7,36 +7,35 @@ import cv2 as cv
 import os.path
 import glob
 from numpy.oldnumeric.linear_algebra import eigenvalues
-data_path = os.path.abspath(os.path.join(os.getcwd(), os.pardir)) +"/data/"
+from file_manager import Picture_Manager
 
-def pca(mode="tr"):
-    global data_path
-    #model = cv.createEigenFaceRecognizer(num_components=10,threshold=100.0)
-    def pca_tr(path):
-        pass
-            
-    def pca_ts(path):
-        """"
-        matrix_test = None
-        for img in glob.glob1(path,'*_bw.png'):
-            bw_img = cv.imread(path+img,0)
-            img_vector = bw_img.reshape(bw_img.shape[0]*bw_img.shape[1])
-            try:
-                matrix_test = np.vstack((matrix_test,img_vector))
-            except:
-                matrix_test = img_vector
-        mean, eigenvectors = cv.PCACompute(matrix_test, np.mean(matrix_test, axis=0).reshape(1,-1))
-        """
-    if mode == "tr":
-        return pca_tr(data_path + 'tr/')
-    else:
-        return pca_ts(data_path + 'ts/')
-
-pca()
-
-
-
-
-
-
-
+"""Main face recognition class, manager all the methods covered"""
+class Recognizer():
+    manager = Picture_Manager()
+    
+    """Initialization of model object through manager functionality"""
+    def __init__(self,type=1,num_components=5,threshold=100.0):
+        self.type = type
+        self.model = self.manager.load_model(type,num_components,threshold)
+    
+    """Training model method"""
+    def tr(self,type="bw"):
+        tr,labels=self.manager.get_samples("tr",type)
+        self.model.train(tr,labels)
+        self.manager.save_model(self.type,self.model)
+    
+    """Test model method, returns error percentage"""
+    def ts(self,type="bw"):
+        ts,labels = self.manager.get_samples("ts",type)
+        images = ts.shape[0]; error = 0
+        for img in xrange(ts.shape[0]):
+            result,confidence=self.model.predict(ts[img])
+            #print "RESULT: ",result
+            #print "LABEL: ",labels[img]data
+            if not result-labels[img]==0:
+                error +=1
+        return (error/images)*100
+        
+test = Recognizer(1)
+test.tr(type="bw")
+print "Classification error: ", test.ts(type="bw")
