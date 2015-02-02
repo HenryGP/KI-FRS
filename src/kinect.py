@@ -7,7 +7,7 @@ import freenect
 import numpy as np
 import cv2 as cv
 import os.path
-from file_manager import File_Manager
+from file_manager import Sample_Manager
 
 """
     Kinect global variables
@@ -94,7 +94,7 @@ def keyboard_handler():
         if run_mode=="tr": run_mode="ts"
         else: run_mode="tr"
         del file_manager
-        file_manager=File_Manager(run_mode)
+        file_manager=Sample_Manager(run_mode)
     if key== 78 or key==110:
         file_manager.new_sampling(run_mode)
     if key == ord('q') or key==27: #End execution
@@ -175,7 +175,7 @@ def start(mode = "tr"):
     """
     global run_mode, file_manager, faceCascade
     run_mode= mode
-    file_manager = File_Manager(mode)
+    file_manager = Sample_Manager(mode)
     faceCascade = file_manager.faceCascade
     freenect.runloop(video=display_rgb,depth=display_depth,body=body)
     
