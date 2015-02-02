@@ -5,9 +5,13 @@ import cv2 as cv
 import os
 from os.path import *
 from os import listdir
+import glob
+import numpy as np
 
-
-class File_Manager():
+class Sample_Manager():
+    """
+        Class for managing files taken from kinect either for tr or ts
+    """
     """Path to the multiple data being managed"""
     #Data path
     data_path = os.path.abspath(os.path.join(os.getcwd(), os.pardir)) +"/data/"
@@ -21,8 +25,6 @@ class File_Manager():
     ts_path = img_path + "ts/"
     #.xml file with cascade detector for frontal faces
     faceCascade = cv.CascadeClassifier(detect_path + "haarcascade_frontalface.xml")
-    #Recognition path
-    rec_path = data_path + "recognition"
     
     """Internal dir counters"""
     img_ptr = 0; tr_ptr = 0; ts_ptr = 0 
@@ -32,7 +34,7 @@ class File_Manager():
             Initializes counter for training and test files by reading
             the data through the state file.
         """
-        if mode=="tr":
+        if mode=="tr": #Training mode
             self.tr_counter = sorted([x[0].split("/")[-1] for x in os.walk(self.tr_path)],reverse=True)[0]
             if self.tr_counter=="": 
                 self.tr_counter=0
@@ -49,8 +51,8 @@ class File_Manager():
                 self.ts_counter=int(self.ts_counter)
             self.new_sampling("ts")
             self.ts_ptr=self.ts_counter
-            self.to_dir(self.ts_ptr, "ts")
-        
+            self.to_dir(self.ts_ptr, "ts")          
+            
     """def __del__(self):"""
     
     def new_sampling(self,mode="tr"):
@@ -112,9 +114,68 @@ class File_Manager():
                 print "Ts pointer: ",self.ts_ptr
                 print "Img pointer: ",self.img_ptr
 
-
-
-#manager = File_Manager()
-#print manager.faceCascade
-
-
+class Picture_Manager():
+    """
+        Class for images management for preprocessing and recognition
+    """
+    #Data path
+    data_path = os.path.abspath(os.path.join(os.getcwd(), os.pardir)) +"/data/"
+    #Images path
+    img_path = data_path + "img/"
+    #Training path
+    tr_path = img_path + "tr/"
+    #Test path
+    ts_path = img_path + "ts/"
+    #Recognition path
+    rec_path = data_path + "recognition/"
+    
+    def get_samples(self,mode="tr",type="bw"):
+        if mode=="tr":
+            path = self.tr_path
+        else:
+            path = self.ts_path
+        if type == "bw":
+            pattern = '*_bw.png'
+        else:
+            pattern = '*_depth.png'
+        samples_matrix = None
+        samples_labels = None
+        """Building up the matrixes"""
+        for label in os.listdir(path):
+            for img in glob.glob1(path+str(label),pattern):
+                bw_img = cv.imread(path+str(label)+"/"+str(img),0)
+                img_vector = bw_img.reshape(bw_img.shape[0]*bw_img.shape[1])
+                try:
+                    samples_matrix = np.vstack((samples_matrix,img_vector))
+                    samples_labels = np.vstack((samples_labels,int(label)))
+                except:
+                    samples_matrix = img_vector
+                    samples_labels = int(label)
+        return samples_matrix, samples_labels
+        
+    def load_model(self,mode,num_components,threshold):
+        if mode==1:
+            name = "eigenfaces.yml"
+            model = cv.createEigenFaceRecognizer(num_components,threshold)
+            try:
+                model.load(self.rec_path+name)
+            except:
+                print "There was no model"
+        else:
+            name = "fisherfaces.yml"
+            model = cv.createFisherFaceRecognizer()
+            try:
+                model.load(self.rec_path+name)
+            except:
+                print "There was no model"       
+        return model
+        
+    def save_model(self,mode,model):
+        if mode==1:
+            name = "eigenfaces.yml"
+        else:
+            name = "fisherfaces.yml"
+        model.save(self.rec_path+name)
+    
+#test = Picture_Manager()
+#test.get_samples("tr")    
