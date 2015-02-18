@@ -35,20 +35,28 @@ class Sample_Manager():
             the data through the state file.
         """
         if mode=="tr": #Training mode
-            self.tr_counter = sorted([x[0].split("/")[-1] for x in os.walk(self.tr_path)],reverse=True)[0]
-            if self.tr_counter=="": 
-                self.tr_counter=0
-            else: 
-                self.tr_counter=int(self.tr_counter)
+            self.tr_counter = [x[0].split("/")[-1] for x in os.walk(self.tr_path)]
+            max = 0
+            for i in list(self.tr_counter):
+                try: 
+                    if int(i)>max: 
+                        max = int(i)
+                except:
+                    continue
+            self.tr_counter=max
             self.new_sampling("tr")
             self.tr_ptr=self.tr_counter
             self.to_dir(self.tr_ptr, "tr")
         else:
-            self.ts_counter = sorted([x[0].split("/")[-1] for x in os.walk(self.ts_path)],reverse=True)[0]
-            if self.ts_counter=="": 
-                self.ts_counter=0
-            else: 
-                self.ts_counter=int(self.ts_counter)
+            self.ts_counter = [x[0].split("/")[-1] for x in os.walk(self.ts_path)]
+            max = 0
+            for i in list(self.ts_counter):
+                try: 
+                    if int(i)>max: 
+                        max = int(i)
+                except:
+                    continue
+            self.ts_counter=max
             self.new_sampling("ts")
             self.ts_ptr=self.ts_counter
             self.to_dir(self.ts_ptr, "ts")          
@@ -85,6 +93,7 @@ class Sample_Manager():
             cv.imwrite(path+str(self.img_ptr)+"_bw.png",samples[0])
             cv.imwrite(path+str(self.img_ptr)+"_depth.png",samples[1])
             cv.imwrite(path+str(self.img_ptr)+"_rgb.png",samples[2])
+            np.save(path+str(self.img_ptr)+'_mtx.npy',samples[1])
         except:
             print "Images couldn't be saved"
     
@@ -136,6 +145,8 @@ class Picture_Manager():
             path = self.ts_path
         if type == "bw":
             pattern = '*_bw.png'
+        elif type=="mtx":
+            pattern = '*_mtx.npy'
         else:
             pattern = '*_depth.png'
         samples_matrix = None
@@ -143,8 +154,11 @@ class Picture_Manager():
         """Building up the matrixes"""
         for label in os.listdir(path):
             for img in glob.glob1(path+str(label),pattern):
-                bw_img = cv.imread(path+str(label)+"/"+str(img),0)
-                img_vector = bw_img.reshape(bw_img.shape[0]*bw_img.shape[1])
+                if type=="bw" or type=="depth":
+                    bw_img = cv.imread(path+str(label)+"/"+str(img),0)
+                    img_vector = bw_img.reshape(bw_img.shape[0]*bw_img.shape[1])
+                else: #Depth matrix loading
+                    img_vector = np.load(path+str(label)+"/"+str(img)).reshape(192*256)
                 try:
                     samples_matrix = np.vstack((samples_matrix,img_vector))
                     samples_labels = np.vstack((samples_labels,int(label)))
@@ -152,7 +166,22 @@ class Picture_Manager():
                     samples_matrix = img_vector
                     samples_labels = int(label)
         return samples_matrix, samples_labels
-        
+
+    def save_samples(self,mode,type,data,labels):
+        if mode == "tr": 
+            path = self.tr_path
+        else: 
+            path = self.ts_path
+        if type == "mtx":
+            c_label = -1; counter = 1
+            for i in xrange(data.shape[0]):
+                if labels[i][0]!= c_label:
+                    c_label = labels[i][0]
+                    counter=1
+                mtx = data[i].reshape(256,192)
+                np.savetxt(path+str(labels[i][0])+"/"+str(counter)+"_nmtx.npy",mtx)
+                counter+=1
+
     def load_model(self,mode,num_components,threshold):
         if mode==1:
             name = "eigenfaces.yml"
