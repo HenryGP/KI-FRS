@@ -18,11 +18,12 @@ picture_flag = False
 run_mode = None
 
 """
-    Global variables for Depth, RGB & BW images
+    Global variables for Depth, RGB ,BW images & Depth Matrix for pre-processing 
 """
 bw_img = None
 depth_img = None
 rgb_img = None
+depth_mtx = None
 
 """
     Fixed rectangle properties (detection assistant)
@@ -40,6 +41,12 @@ faceCascade = None
 #Window creation
 cv.namedWindow('RGB')
 #cv.namedWindow('Depth') #If depth image needs to be displayed
+
+"""Depth image allignment"""
+K = np.array([[385.58130632872212, 0, 371.50000000000000], [0, 385.58130632872212, 236.50000000000000], [0, 0, 1]])
+d = np.array([-0.27057628187805571, 0.10522881965331317, 0, 0, 0]) # just use first two terms (no translation)
+newcamera, roi = cv.getOptimalNewCameraMatrix(K, d, (640,480), 0)
+
 
 def video_cv(video):
     """Converts video into a BGR format for opencv
@@ -60,19 +67,21 @@ def depth_cv(depth):
         Returns:
             A numpy array that has been processed whos datatype is unspecified
     """
-    np.clip(depth, 0, 2**10 - 1, depth)
-    depth >>= 2
+    np.clip(depth, 0,(2**11)-1, depth)
+    mtx = np.matrix.copy(depth)
+    #depth >>= 2
     depth = depth.astype(np.uint8)
-    return depth
+    return depth,mtx
 
 def file_saving():
     """
         Saves the files taken from the sensor to it's corresponding directory
         according to run_mode
     """
-    global rx,ry,r_area, file_manager, run_mode
+    global rx,ry,r_area, file_manager, run_mode,K,d,newcamera
     print "SMILE!" #Polite salutation, useful to realize when the photo is taken
-    samples = [bw_img[ry:ry+r_area[1],rx:rx+r_area[0]],depth_img[ry-15:ry+r_area[1],rx+20:rx+r_area[0]],rgb_img[ry:ry+r_area[1],rx:rx+r_area[0]]]
+    depth_align = cv.undistort(depth_img, K, d, None, newcamera)
+    samples = [bw_img[ry:ry+r_area[1],rx:rx+r_area[0]],depth_align[ry-31:ry+r_area[1]-31,rx+31:rx+r_area[0]+31],rgb_img[ry:ry+r_area[1],rx:rx+r_area[0]],depth_mtx]
     file_manager.store_samples(samples,run_mode)
 
 def keyboard_handler():
@@ -142,9 +151,9 @@ def display_depth(dev,data,timestamp):
         Depth image update, is also possible to display the image into a window
         by uncommenting corresponding sections
     """
-    global depth_img
+    global depth_img, depth_mtx
     #Capturing frame by frame
-    depth_img=depth_cv(data)
+    depth_img,depth_mtx=depth_cv(data)
     #Displaying the resulting frame
     #cv.imshow('Depth', depth_img)
 
