@@ -30,12 +30,13 @@ class Recognizer():
         images = ts.shape[0]; error = 0
         for img in xrange(ts.shape[0]):
             result,confidence=self.model.predict(ts[img])
-            #print "RESULT: ",result
-            #print "LABEL: ",labels[img]data
-            if not result-labels[img]==0:
+            print "RESULT: ",result
+            print "LABEL: ",labels[img][0]
+            if not (result==labels[img][0]):
                 error +=1
+        print "ERROR: ",error
         return (error/images)*100
         
-test = Recognizer(1)
+test = Recognizer(2)
 test.tr(type="bw")
 print "Classification error: ", test.ts(type="bw")
