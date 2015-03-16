@@ -18,7 +18,6 @@ manager = Picture_Manager()
     Based on the estimated value, processes the BW image
 """
 def light_estimation(rgb_img):
-    samples, labels = manager.get_samples("tr","mtx")
     pass
 
 """
@@ -38,8 +37,4 @@ def normalize_depth(mode="tr"):
         for p in xrange(matrix.shape[0]):
             matrix[p]=0.1236 * math.tan(float(matrix[p]) / 2842.5 + 1.1863) * 100 #in centimeters
         samples[i]=matrix
-        print matrix.max(),matrix.min()
     manager.save_samples(mode,"mtx",samples,labels)        
-        
-
-normalize_depth("tr")
