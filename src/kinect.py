@@ -39,14 +39,13 @@ faceCascade = None
 
 """Windows for image display"""
 #Window creation
-cv.namedWindow('RGB')
+cv.namedWindow('Viewer')
 #cv.namedWindow('Depth') #If depth image needs to be displayed
 
 """Depth image allignment"""
 K = np.array([[385.58130632872212, 0, 371.50000000000000], [0, 385.58130632872212, 236.50000000000000], [0, 0, 1]])
 d = np.array([-0.27057628187805571, 0.10522881965331317, 0, 0, 0]) # just use first two terms (no translation)
 newcamera, roi = cv.getOptimalNewCameraMatrix(K, d, (640,480), 0)
-
 
 def video_cv(video):
     """Converts video into a BGR format for opencv
@@ -73,7 +72,7 @@ def depth_cv(depth):
     depth = depth.astype(np.uint8)
     return depth,mtx
 
-def file_saving():
+def file_saving(name):
     """
         Saves the files taken from the sensor to it's corresponding directory
         according to run_mode
@@ -82,7 +81,10 @@ def file_saving():
     print "SMILE!" #Polite salutation, useful to realize when the photo is taken
     depth_align = cv.undistort(depth_img, K, d, None, newcamera)
     samples = [bw_img[ry:ry+r_area[1],rx:rx+r_area[0]],depth_align[ry-31:ry+r_area[1]-31,rx+31:rx+r_area[0]+31],rgb_img[ry:ry+r_area[1],rx:rx+r_area[0]],depth_mtx]
-    file_manager.store_samples(samples,run_mode)
+    file_manager.store_samples(samples,run_mode,name)
+
+def new_sampling(mode):
+    file_manager.new_sampling(mode)
 
 def keyboard_handler():
     """
@@ -91,23 +93,12 @@ def keyboard_handler():
     """
     global keep_running, tilt_angle, run_mode,file_manager
     key = cv.waitKey(1)
-    if key== 32: #File saving
-        file_saving()
     if key == 65362: #Up key
         if not tilt_angle+3>27:
             tilt_angle+=3
     if key== 65364: #Down key
         if not tilt_angle-3<-27:
             tilt_angle-=3
-    if key== 77 or key==109:
-        if run_mode=="tr": run_mode="ts"
-        else: run_mode="tr"
-        del file_manager
-        file_manager=Sample_Manager(run_mode)
-    if key== 78 or key==110:
-        file_manager.new_sampling(run_mode)
-    if key == ord('q') or key==27: #End execution
-        keep_running = False
 
 def display_rgb(dev, data, timestamp):
     """
@@ -142,7 +133,7 @@ def display_rgb(dev, data, timestamp):
     #Draw fixed rectangle in image
     cv.rectangle(tmp,(rx,ry),(rx+r_area[0],ry+r_area[1]),r_color,2)
     #Displaying the resulting frame
-    cv.imshow('RGB', tmp)
+    cv.imshow('Viewer', tmp)
     #Key event handling + manual motor movement
     keyboard_handler()
 
@@ -184,8 +175,8 @@ def start(mode = "tr"):
     """
     global run_mode, file_manager, faceCascade
     run_mode= mode
-    file_manager = Sample_Manager(mode)
+    file_manager = Sample_Manager()
     faceCascade = file_manager.faceCascade
     freenect.runloop(video=display_rgb,depth=display_depth,body=body)
     
-start("tr")
+#start("tr")
