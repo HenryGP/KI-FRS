@@ -37,6 +37,6 @@ class Recognizer():
         print "ERROR: ",error
         return (error/images)*100
         
-test = Recognizer(2)
+"""test = Recognizer(2)
 test.tr(type="bw")
-print "Classification error: ", test.ts(type="bw")
+print "Classification error: ", test.ts(type="bw")"""
