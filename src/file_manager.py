@@ -111,8 +111,8 @@ class Sample_Manager():
             path=self.ts_path+str(self.ts_counter)+"/"
         try:
             self.img_ptr += 1
-            print "Path: ",path
-            print "img_pointer: ",self.img_ptr
+            #print "Path: ",path
+            #print "img_pointer: ",self.img_ptr
             cv.imwrite(path+str(self.img_ptr)+"_bw.png",samples[0])
             cv.imwrite(path+str(self.img_ptr)+"_depth.png",samples[1])
             cv.imwrite(path+str(self.img_ptr)+"_rgb.png",samples[2])
@@ -138,14 +138,20 @@ class Picture_Manager():
     rec_path = "%srecognition/"%(data_path)
 
     def get_sample(self,mode,type,label,id):
+        """if not type=="bw":
+            print "Mode: ",mode
+            print "Type: ",type
+            print "Label: ",label
+            print "ID: ",id"""
         if mode=="tr":
             path = self.tr_path
         else:
             path = self.ts_path
-        if not type=="nmtx":
+        if not (type=="mtx" or type=="nmtx"):
             bw_img = cv.imread(path+str(label)+"/"+str(id),0)
             return bw_img.reshape(bw_img.shape[0]*bw_img.shape[1])
         else:
+            print "Needs to load a matrix"
             return np.load(path+str(label)+"/"+str(id)).reshape(192*256)
 
     def get_samples(self,mode="tr",type="bw"):
@@ -167,12 +173,13 @@ class Picture_Manager():
         else:
             pattern = '*_depth.png'
         #
-        samples_matrix = []; samples_labels = []
+        samples_matrix = []; samples_labels = [];names=[]
         """Building up the matrixes"""
         for label in os.listdir(path):
             #print "Label analyzed: ",label
             if not type=="rgb":
                 for img in glob.glob1(path+str(label),pattern):
+                    names.append(img)
                     #print "File processed: ",img
                     if type=="nmtx" or type=="mtx":
                         img_vector = np.load(path+str(label)+"/"+str(img)).reshape(192*256)
@@ -188,30 +195,30 @@ class Picture_Manager():
             else:#When type is RGB
                 for img in glob.glob1(path+str(label),pattern):
                     #print "File processed: ",img
-                    samples_matrix.append(cv.imread(path+str(label)+"/"+str(img),0))
+                    names.append(img)
+                    samples_matrix.append(cv.imread(path+str(label)+"/"+str(img),cv.CV_LOAD_IMAGE_COLOR))
                     samples_labels.append(label)
-        return samples_matrix,samples_labels
+        return samples_matrix,samples_labels,names
                     
-    def save_samples(self,mode,type,data,labels):
+    def save_samples(self,mode,type,data,labels,names=None):
         if mode == "tr": 
             path = self.tr_path
         else: 
             path = self.ts_path
-        c_label = -1; counter = 1
         for i in xrange(data.shape[0]):
-            if labels[i][0]!= c_label:
-                c_label = labels[i][0];counter=1
-            mtx = data[i].reshape(256,192)
             if type == "mtx":
-                np.save(path+str(labels[i][0])+"/"+str(counter)+"_nmtx.npy",mtx)
-                os.remove(path+str(labels[i][0])+"/"+str(counter)+"_mtx.npy") #Remove unnormalized matrix
+                mtx = data[i].reshape(256,192)
+                np.save(path+str(labels[i][0])+"/"+names[i][0:(names[i].find("_"))]+"_nmtx.npy",mtx)
+                #os.remove(path+str(labels[i][0])+"/"+str(counter)+"_mtx.npy") #Remove unnormalized matrix
             elif type == "bw":
-                cv.imwrite(path+str(labels[i][0])+"/"+str(counter)+"_nbw.png",mtx)
-                os.remove(path+str(labels[i][0])+"/"+str(counter)+"_bw.png") #Remove unnormalized bw img
+                mtx = data[i].reshape(100,100)
+                cv.imwrite(path+str(labels[i][0])+"/"+names[i][0:(names[i].find("_"))]+"_nbw.png",mtx)
+                #os.remove(path+str(labels[i][0])+"/"+str(counter)+"_bw.png") #Remove unnormalized bw img
             elif type == "depth":
-                cv.imwrite(path+str(labels[i][0])+"/"+str(counter)+"_ndepth.png",mtx)
-                os.remove(path+str(labels[i][0])+"/"+str(counter)+"_depth.png") #Remove unnormalized depth img
-            counter+=1
+                mtx = data[i].reshape(100,100)
+                cv.imwrite(path+str(labels[i][0])+"/"+names[i][0:(names[i].find("_"))]+"_ndepth.png",mtx)
+                #os.remove(path+str(labels[i][0])+"/"+str(counter)+"_depth.png") #Remove unnormalized depth img
+
 
     def save_sample(self,mode,type,label,id,img):
         if mode=="tr":
@@ -223,23 +230,22 @@ class Picture_Manager():
         else:
             np.save(path+str(label)+"/"+str(id)+"_nmtx.npy",img)
 
-    def load_model(self,mode,num_components,threshold):
+    def load_model(self,mode,source,num_components,threshold):
         if mode==1:
-            name = "eigenfaces.yaml"
+            name = "eigenfaces_%s.yaml"%(source)
             model = cv.createEigenFaceRecognizer(num_components,threshold)
         else:
-            name = "fisherfaces.yaml"
+            name = "fisherfaces_%s.yaml"%(source)
             model = cv.createFisherFaceRecognizer()
         try:
             model.load(self.rec_path+name)
         except:
-            print "There was no model"
+            print "There was no model stored"
         return model
         
-    def save_model(self,mode,model):
+    def save_model(self,mode,source,model):
         if mode==1:
-            name = "eigenfaces.yaml"
+            name = "eigenfaces_%s.yaml"%(source)
         else:
-            name = "fisherfaces.yaml"
+            name = "fisherfaces_%s.yaml"%(source)
         model.save(self.rec_path+name)
-

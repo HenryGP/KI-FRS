@@ -149,30 +149,44 @@ class Frame(wx.Frame):
 			mode = "tr"
 		else:
 			mode = "ts"
-		ret = preprocessor.normalize_depth(mode)
+		ret = preprocessor.normalize_depth_map(mode)
+		preprocessor.normalize_bw(mode)
 		self.Controller_statusbar.SetStatusText("Processed "+str(ret)+" matrixes")
 		event.Skip()
 
 	def train_model(self, event):  # wxGlade: Frame.<event_handler>
-		if self.combo_box_1.GetSelection()==0:
+		if self.combo_box_2.GetSelection()==0:
 			mode = 1
 		else:
 			mode = 2
-		Recognizer(mode).tr("bw") #Should be redesigned to be more flexible
+		selection = self.combo_box_2_copy.GetSelection()
+		if selection==0:
+			print "Automatic mode for face recognition"
+		elif selection==1: #Black and white image
+			Recognizer(mode,"bw").tr("bw")
+		elif selection==2:#Depth image
+			Recognizer(mode,"depth").tr("depth")
+		else: #Depth map
+			Recognizer(mode,"nmtx").tr("nmtx")
 		self.Controller_statusbar.SetStatusText("Model successfully trained")
 		event.Skip()
 
 	def test_model(self, event):  # wxGlade: Frame.<event_handler>
-		if self.combo_box_1.GetSelection()==0:
+		if self.combo_box_2.GetSelection()==0:
 			mode = 1
 		else:
 			mode = 2
-		ret = Recognizer(mode).ts("bw")
+		selection = self.combo_box_2_copy.GetSelection()
+		if selection==0:
+			print "Automatic mode for face recognition"
+		elif selection==1: #Black and white image
+			ret = Recognizer(mode,"bw").ts("bw")
+		elif selection==2:#Depth image
+			ret = Recognizer(mode,"depth").ts("depth")
+		else: #Depth map
+			ret = Recognizer(mode,"nmtx").ts("nmtx")
+		print "ERROR: ",ret
 		self.Controller_statusbar.SetStatusText("Classification error: "+str(ret)+" %")
-		event.Skip()
-
-	def save_model(self, event):  # wxGlade: Frame.<event_handler>
-		print "Event handler 'save_model' not implemented!"
 		event.Skip()
 
 	def identify(self, event):  # wxGlade: Frame.<event_handler>
