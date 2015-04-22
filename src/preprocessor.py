@@ -72,7 +72,6 @@ def light_normalization(img):
    img = cv.pow(img,0.8)
    img = np.uint8(img*255)
    img = cv.fastNlMeansDenoising(img,10,10,7,21)
-   cv.imwrite("test.png",img)
    #Gaussian filter to smooth
    img = cv.GaussianBlur(img,(3,3),0)
    return img
@@ -83,6 +82,8 @@ def normalize_depth_image(depth_img,map_mtx):
 def normalize_images(mode="tr"):
     #RGB images for light estimation
     rgb_imgs, rgb_labels, rgb_names = manager.get_samples(mode,"rgb")
+    #print "RGB_IMGS SIZE: ",len(rgb_imgs)
+    #print "Unique labels: ",set(rgb_labels)
     #Raw depth images
     depth_imgs,depth_labels,depth_names = manager.get_samples(mode,"depth")
     #Depth map
@@ -93,7 +94,7 @@ def normalize_images(mode="tr"):
     for idx in xrange(len(rgb_names)):
         names_dict[rgb_labels[idx]].append((rgb_names[idx][0:rgb_names[idx].find("_")],idx))
     for idx in xrange(len(rgb_imgs)):
-        print "Analysis of rgb image: ",rgb_names[idx]," , ",rgb_labels[idx]
+        #print "Analysis of rgb image: ",rgb_names[idx]," , ",rgb_labels[idx]
         #Preprocessing of the BW image
         if light_estimation(rgb_imgs[idx])==False:
             bw_img = manager.get_sample(mode,"bw",rgb_labels[idx],rgb_names[idx]).reshape(256,192)
@@ -106,7 +107,6 @@ def normalize_images(mode="tr"):
         map_mtx_name = rgb_names[idx][0:rgb_names[idx].find("_")]+"_mtx.npy"
         depth_img = manager.get_sample(mode,"depth",rgb_labels[idx],depth_img_name).reshape(256,192)
         map_mtx = manager.get_sample(mode,"nmtx",rgb_labels[idx],map_mtx_name).reshape(256,192)
-        #cv.imwrite(str(idx)+rgb_names[idx],depth_img)
         r_bw,r_depth,r_mtx = cut_image(bw_img,depth_img,map_mtx)
         r_depth = normalize_depth_image(r_depth,r_mtx)
         ##############################
@@ -122,5 +122,4 @@ def normalize_images(mode="tr"):
             depth_new_imgs = r_depth
     manager.save_samples(mode,"bw",bw_new_imgs,rgb_labels,rgb_names)
     manager.save_samples(mode,"depth",depth_new_imgs,rgb_labels,rgb_names)
-
-normalize_images("ts")
+    return len(rgb_labels)

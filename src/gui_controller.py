@@ -29,7 +29,7 @@ class Frame(wx.Frame):
 		self.label_2 = wx.StaticText(self.tab2, wx.ID_ANY, _(" Model:"))
 		self.combo_box_2 = wx.ComboBox(self.tab2, wx.ID_ANY, choices=[_("Eigenfaces"), _("Fisherfaces")], style=wx.CB_DROPDOWN | wx.CB_READONLY)
 		self.label_2_copy = wx.StaticText(self.tab2, wx.ID_ANY, _(" Source:"))
-		self.combo_box_2_copy = wx.ComboBox(self.tab2, wx.ID_ANY, choices=[_("Automatic"), _("B&W"), _("Depth Image"), _("Depth Map")], style=wx.CB_DROPDOWN | wx.CB_READONLY)
+		self.combo_box_2_copy = wx.ComboBox(self.tab2, wx.ID_ANY, choices=[_("Automatic"), _("B&W"), _("Depth Image")], style=wx.CB_DROPDOWN | wx.CB_READONLY)
 		self.button_7 = wx.Button(self.tab2, wx.ID_ANY, _("Train"))
 		self.button_8 = wx.Button(self.tab2, wx.ID_ANY, _("Test"))
 		self.static_line_1 = wx.StaticLine(self.tab2, wx.ID_ANY)
@@ -149,9 +149,8 @@ class Frame(wx.Frame):
 			mode = "tr"
 		else:
 			mode = "ts"
-		ret = preprocessor.normalize_depth_map(mode)
-		preprocessor.normalize_bw(mode)
-		self.Controller_statusbar.SetStatusText("Processed "+str(ret)+" matrixes")
+		ret = preprocessor.normalize_images(mode)
+		self.Controller_statusbar.SetStatusText("Processed "+str(ret)+" samples")
 		event.Skip()
 
 	def train_model(self, event):  # wxGlade: Frame.<event_handler>
@@ -166,8 +165,6 @@ class Frame(wx.Frame):
 			Recognizer(mode,"bw").tr("bw")
 		elif selection==2:#Depth image
 			Recognizer(mode,"depth").tr("depth")
-		else: #Depth map
-			Recognizer(mode,"nmtx").tr("nmtx")
 		self.Controller_statusbar.SetStatusText("Model successfully trained")
 		event.Skip()
 
@@ -208,22 +205,4 @@ if __name__ == "__main__":
 	kinect.start("tr")
 	#thread.start_new_thread(kinect.start, ("tr",))
 	thread.start_new_thread(GUI_panel.MainLoop,())
-	
-	
-	
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 	

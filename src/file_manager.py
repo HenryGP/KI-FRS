@@ -151,7 +151,7 @@ class Picture_Manager():
             bw_img = cv.imread(path+str(label)+"/"+str(id),0)
             return bw_img.reshape(bw_img.shape[0]*bw_img.shape[1])
         else:
-            print "Needs to load a matrix"
+            #print "Needs to load a matrix"
             return np.load(path+str(label)+"/"+str(id)).reshape(192*256)
 
     def get_samples(self,mode="tr",type="bw"):
@@ -164,14 +164,18 @@ class Picture_Manager():
         #Type of file to be extracted
         if type == "bw":
             pattern = '*_bw.png'
+        elif type == "nbw":
+            pattern = '*_bw.png'
         elif type=="mtx":
             pattern = '*_mtx.npy'
         elif type=="nmtx":
             pattern = '*_nmtx.npy'
         elif type=="rgb":
             pattern = '*_rgb.png'
-        else:
+        elif type == "depth":
             pattern = '*_depth.png'
+        else:
+            pattern = '*_ndepth.png'
         #
         samples_matrix = []; samples_labels = [];names=[]
         """Building up the matrixes"""
@@ -198,6 +202,8 @@ class Picture_Manager():
                     names.append(img)
                     samples_matrix.append(cv.imread(path+str(label)+"/"+str(img),cv.CV_LOAD_IMAGE_COLOR))
                     samples_labels.append(label)
+                
+        
         return samples_matrix,samples_labels,names
                     
     def save_samples(self,mode,type,data,labels,names=None):
@@ -208,15 +214,15 @@ class Picture_Manager():
         for i in xrange(data.shape[0]):
             if type == "mtx":
                 mtx = data[i].reshape(256,192)
-                np.save(path+str(labels[i][0])+"/"+names[i][0:(names[i].find("_"))]+"_nmtx.npy",mtx)
+                np.save(path+str(labels[i])+"/"+names[i][0:(names[i].find("_"))]+"_nmtx.npy",mtx)
                 #os.remove(path+str(labels[i][0])+"/"+str(counter)+"_mtx.npy") #Remove unnormalized matrix
             elif type == "bw":
                 mtx = data[i].reshape(100,100)
-                cv.imwrite(path+str(labels[i][0])+"/"+names[i][0:(names[i].find("_"))]+"_nbw.png",mtx)
+                cv.imwrite(path+str(labels[i])+"/"+names[i][0:(names[i].find("_"))]+"_nbw.png",mtx)
                 #os.remove(path+str(labels[i][0])+"/"+str(counter)+"_bw.png") #Remove unnormalized bw img
             elif type == "depth":
                 mtx = data[i].reshape(100,100)
-                cv.imwrite(path+str(labels[i][0])+"/"+names[i][0:(names[i].find("_"))]+"_ndepth.png",mtx)
+                cv.imwrite(path+str(labels[i])+"/"+names[i][0:(names[i].find("_"))]+"_ndepth.png",mtx)
                 #os.remove(path+str(labels[i][0])+"/"+str(counter)+"_depth.png") #Remove unnormalized depth img
 
 
@@ -230,17 +236,15 @@ class Picture_Manager():
         else:
             np.save(path+str(label)+"/"+str(id)+"_nmtx.npy",img)
 
-    def load_model(self,mode,source,num_components,threshold):
-        if mode==1:
-            name = "eigenfaces_%s.yaml"%(source)
-            model = cv.createEigenFaceRecognizer(num_components,threshold)
-        else:
-            name = "fisherfaces_%s.yaml"%(source)
+    def load_model(self,mode,source,num_components=None):
+        if mode==1 and num_components==None:
+            model = cv.createEigenFaceRecognizer()
+        elif mode==1:    
+            model = cv.createEigenFaceRecognizer(num_components)
+        if mode==2 and num_components==None:
             model = cv.createFisherFaceRecognizer()
-        try:
-            model.load(self.rec_path+name)
-        except:
-            print "There was no model stored"
+        elif mode==2:
+            model = cv.createFisherFaceRecognizer(num_components)
         return model
         
     def save_model(self,mode,source,model):
@@ -249,3 +253,12 @@ class Picture_Manager():
         else:
             name = "fisherfaces_%s.yaml"%(source)
         model.save(self.rec_path+name)
+
+#manager = Picture_Manager()
+#rgb_imgs, rgb_labels, rgb_names = manager.get_samples("tr","rgb")
+#print "RGB_IMGS SIZE: ",len(rgb_imgs)
+#print "Unique labels: ",set(rgb_labels)
+
+        
+        
+        
