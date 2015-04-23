@@ -12,13 +12,14 @@ cd release
 cmake -D CMAKE_BUILD_TYPE=RELEASE -D CMAKE_INSTALL_PREFIX=/usr/local ..
 make
 sudo make install
-cd ..
+cd ../..
 
 echo "Installing libfreenect"
 sudo apt-get install freenect
 sudo apt-get install cython
 sudo apt-get install python-dev
 sudo apt-get install python-numpy
+sudo apt-get install python-matplotlib
 
 mkdir tmp
 cd tmp
@@ -26,4 +27,3 @@ git clone https://github.com/OpenKinect/libfreenect.git
 cd libfreenect/wrappers/python/
 sudo python setup.py install
 cd ../../../..
-rm tmp
