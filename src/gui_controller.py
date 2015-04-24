@@ -95,7 +95,7 @@ class Frame(wx.Frame):
 		sizer_4.Add(sizer_2, 1, wx.EXPAND, 0)
 		self.tab1.SetSizer(sizer_4)
 		sizer_3.Add((0, 5), 0, 0, 0)
-		sizer_3.Add(self.label_2, 0, 0, 0)
+		sizer_3.Add(self.label_2, 0, 0, 0), _("Depth Image")
 		sizer_3.Add(self.combo_box_2, 0, wx.ALIGN_CENTER_HORIZONTAL | wx.ALIGN_CENTER_VERTICAL, 0)
 		sizer_3.Add(self.label_2_copy, 0, 0, 0)
 		sizer_3.Add((0, 5), 0, 0, 0)
@@ -154,6 +154,7 @@ class Frame(wx.Frame):
 		event.Skip()
 
 	def train_model(self, event):  # wxGlade: Frame.<event_handler>
+		pass
 		if self.combo_box_2.GetSelection()==0:
 			mode = 1
 		else:
@@ -169,6 +170,7 @@ class Frame(wx.Frame):
 		event.Skip()
 
 	def test_model(self, event):  # wxGlade: Frame.<event_handler>
+		pass
 		if self.combo_box_2.GetSelection()==0:
 			mode = 1
 		else:
@@ -200,9 +202,25 @@ if __name__ == "__main__":
 	Controller = Frame(None, wx.ID_ANY, "",style=wx.DEFAULT_FRAME_STYLE ^ wx.RESIZE_BORDER)
 	GUI_panel.SetTopWindow(Controller)
 	Controller.Show()
-	#Start kinect loop for sampling
-	#thread.start_new_thread(kinect.start, ("tr",))
+	#GUI_panel.MainLoop()
 	kinect.start("tr")
-	#thread.start_new_thread(kinect.start, ("tr",))
-	thread.start_new_thread(GUI_panel.MainLoop,())
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	

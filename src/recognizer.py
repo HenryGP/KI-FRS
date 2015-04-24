@@ -79,4 +79,3 @@ def test_components(type,source,min,max):
     plt.xlabel("No. Components")
     plt.ylabel("Error %")
     plt.show()
-
