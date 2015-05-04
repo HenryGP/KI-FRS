@@ -72,6 +72,12 @@ def depth_cv(depth):
     depth = depth.astype(np.uint8)
     return depth,mtx
 
+def get_sample():
+    global rx,ry,r_area, file_manager, run_mode,K,d,newcamera
+    depth_align = cv.undistort(depth_img, K, d, None, newcamera)
+    return rgb_img[ry:ry+r_area[1],rx:rx+r_area[0]],depth_align[ry-31:ry+r_area[1]-31,rx+31:rx+r_area[0]+31],depth_mtx
+
+
 def file_saving(name):
     """
         Saves the files taken from the sensor to it's corresponding directory

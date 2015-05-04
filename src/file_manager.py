@@ -128,6 +128,10 @@ class Picture_Manager():
     """
     #Data path
     data_path =  "%s/data/"%(os.path.abspath(os.path.join(os.getcwd(), os.pardir)))
+    #Detector path
+    detect_path = "%sdetector/" % (data_path)
+    #.xml file with cascade detector for depth images
+    faceCascade = cv.CascadeClassifier(detect_path + "haarcascade_depth.xml")
     #Images path
     img_path = "%simg/" % (data_path)
     #Training path
@@ -165,7 +169,7 @@ class Picture_Manager():
         if type == "bw":
             pattern = '*_bw.png'
         elif type == "nbw":
-            pattern = '*_bw.png'
+            pattern = '*_nbw.png'
         elif type=="mtx":
             pattern = '*_mtx.npy'
         elif type=="nmtx":
@@ -237,6 +241,7 @@ class Picture_Manager():
             np.save(path+str(label)+"/"+str(id)+"_nmtx.npy",img)
 
     def load_model(self,mode,source,num_components=None):
+        name = "eigenfaces_%s.yaml"%(source)
         if mode==1 and num_components==None:
             model = cv.createEigenFaceRecognizer()
         elif mode==1:    
@@ -245,6 +250,11 @@ class Picture_Manager():
             model = cv.createFisherFaceRecognizer()
         elif mode==2:
             model = cv.createFisherFaceRecognizer(num_components)
+        try:
+            model.load(self.rec_path+name)
+            print "Model loaded successfully"
+        except:
+            print "Failed at loading a stored model, creating a new one"
         return model
         
     def save_model(self,mode,source,model):
@@ -252,13 +262,5 @@ class Picture_Manager():
             name = "eigenfaces_%s.yaml"%(source)
         else:
             name = "fisherfaces_%s.yaml"%(source)
-        model.save(self.rec_path+name)
-
-#manager = Picture_Manager()
-#rgb_imgs, rgb_labels, rgb_names = manager.get_samples("tr","rgb")
-#print "RGB_IMGS SIZE: ",len(rgb_imgs)
-#print "Unique labels: ",set(rgb_labels)
-
-        
-        
+        model.save(self.rec_path+name)       
         

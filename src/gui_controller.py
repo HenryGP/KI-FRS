@@ -11,6 +11,8 @@ import wx
 import thread
 import gettext
 
+import cv2 as cv
+
 class Frame(wx.Frame):
 	def __init__(self, *args, **kwds):
 		# begin wxGlade: Frame.__init__
@@ -189,7 +191,27 @@ class Frame(wx.Frame):
 		event.Skip()
 
 	def identify(self, event):  # wxGlade: Frame.<event_handler>
-		print "Event handler 'identify' not implemented!"
+		rgb_img,depth_img,depth_mtx = kinect.get_sample()
+		r_bw,r_depth,r_mtx=preprocessor.normalize_sample(rgb_img,depth_img,depth_mtx)
+		if r_bw==None:
+			event.Skip()
+			self.Controller_statusbar.SetStatusText("There where no faces detected")
+			return
+		#0: eigenfaces (1), 1: fisherfaces(2)
+		if self.combo_box_2.GetSelection()==0:
+			model = 1
+		else:
+			model = 2
+		#0: automatic("auto"), 1:"nbw", 2:"ndepth"
+		if self.combo_box_2_copy.GetSelection()==0:
+			mode = "auto"
+		elif self.combo_box_2_copy.GetSelection()==1:
+			mode = "nbw"
+		else:
+			mode = "ndepth"
+		rec = Recognizer(model)
+		rec.predict(mode,r_bw,r_depth)				
+	#GUI_panel.MainLoop()
 		event.Skip()
 
 	def tab_changed(self, event):  # wxGlade: Frame.<event_handler>
@@ -202,7 +224,6 @@ if __name__ == "__main__":
 	Controller = Frame(None, wx.ID_ANY, "",style=wx.DEFAULT_FRAME_STYLE ^ wx.RESIZE_BORDER)
 	GUI_panel.SetTopWindow(Controller)
 	Controller.Show()
-	#GUI_panel.MainLoop()
 	kinect.start("tr")
 	
 	
